@@ -1,75 +1,22 @@
-from dataclasses import dataclass
-from os import environ
-
 from dotenv import load_dotenv
-from sqlalchemy import URL
+import os
 
 load_dotenv()
 
+CLIENT_SECRET = os.environ.get("CLIENT_SECRET")
+CLIENT_ID = os.environ.get("CLIENT_ID")
+REDIRECT_URL = os.environ.get("REDIRECT_URL")
 
-@dataclass
-class DatabaseConfig:
-    name: str | None = environ.get("DB_NAME")
-    user: str | None = environ.get("DB_USER")
-    password: str | None = environ.get("DB_PASS", None)
-    port: int = int(environ.get("DB_PORT", 5432))
-    host: str = environ.get("DB_HOST", "db")
+DB_HOST = os.environ.get("DB_HOST")
+DB_PORT = os.environ.get("DB_PORT")
+DB_NAME = os.environ.get("DB_NAME")
+DB_USER = os.environ.get("DB_USER")
+DB_PASS = os.environ.get("DB_PASS")
+REDIS_URL = os.environ.get("REDIS_URL")
 
-    driver: str = "asyncpg"
-    database_system: str = "postgresql"
-
-    def __post_init__(self):
-        required_vars = ["name", "user", "password", "port", "host"]
-
-        for var in required_vars:
-            value = getattr(self, var)
-            if value is None:
-                raise ValueError(f"Environment variable for {var} is not set")
-
-    def build_connection_str(self, test_db: bool = False) -> str:
-        return URL.create(
-            drivername=f"{self.database_system}+{self.driver}",
-            username=self.user,
-            database=self.name,
-            password=self.password,
-            port=self.port if not test_db else 5433,
-            host=self.host,
-        ).render_as_string(hide_password=False)
-
-
-@dataclass
-class LoggerConfig:
-    host: str = environ.get("ELASTICSEARCH_HOST")
-    port: int = environ.get("ELASTICSEARCH_PORT")
-
-    @property
-    def url(self) -> str:
-        return f'http://{self.host}:{self.port}'
-
-
-@dataclass
-class WidgetsServer:
-    host: str = environ.get("WIDGETS_SERVER_HOST")
-    port: str = environ.get("WIDGETS_SERVER_PORT")
-
-    @property
-    def url(self) -> str:
-        return f'http://{self.host}:{self.port}'
-
-
-@dataclass
-class Widget:
-    client_id: str = environ.get("CLIENT_ID")
-
-
-@dataclass
-class Configuration:
-    developer_name = environ.get("DEVELOPER_NAME")
-    debug = bool(environ.get("DEBUG"))
-    db = DatabaseConfig()
-    logger = LoggerConfig()
-    widget = Widget()
-    widgets_server = WidgetsServer()
-
-
-conf = Configuration()
+RMQ_USER = os.environ.get("RMQ_USER")
+RMQ_PASSWORD = os.environ.get("RMQ_PASSWORD")
+RMQ_HOST = os.environ.get("RMQ_HOST")
+RMQ_PORT = os.environ.get("RMQ_PORT")
+RMQ_VHOST = os.environ.get("RMQ_VHOST")
+RMQ_QUEUE = os.environ.get("RMQ_QUEUE")

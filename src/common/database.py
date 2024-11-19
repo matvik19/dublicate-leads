@@ -1,22 +1,27 @@
-import subprocess
-
-from collections.abc import Callable
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.engine.url import URL
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine as _create_async_engine
+from sqlalchemy.pool import NullPool
+from src.common.config import DB_HOST, DB_NAME, DB_PASS, DB_PORT, DB_USER
 
-from src.common.config import conf
-
-
-def create_async_engine(url: URL | str) -> AsyncEngine:
-    return _create_async_engine(url=url, echo=conf.debug, pool_pre_ping=True)
+DATABASE_URL = f"postgresql+asyncpg://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+Base = declarative_base()
 
 
-async_session_maker: Callable[..., AsyncSession] = sessionmaker(
-    create_async_engine(conf.db.build_connection_str()), class_=AsyncSession, expire_on_commit=False
+engine = create_async_engine(
+    DATABASE_URL,
+    pool_size=30,
+    max_overflow=25,
+    echo=False,
+    pool_timeout=30,
+    pool_recycle=1800,
+    pool_pre_ping=True
 )
 
+async_session_maker = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
-async def get_async_session():
+
+async def get_async_session() -> AsyncSession:
     async with async_session_maker() as session:
         yield session
+
